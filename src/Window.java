@@ -5,7 +5,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.io.File;
 
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -33,7 +35,7 @@ public class Window extends JFrame implements ActionListener {
 	private JMenuItem rehacerJMenuItem; // Item correspondiente a la acción de rehacer
 	private JMenuItem ayudaJMenuItem; // Item correspondiente a la acción de ayuda
 	private JMenuItem crearJMenuItem; // Item correspondiente a la acción de crear
-	
+
 	private String path;
 
 	private String[][] matriz;
@@ -178,21 +180,70 @@ public class Window extends JFrame implements ActionListener {
 	/////// FIN MÉTODOS ITEM
 	/////// CREAR//////////////////////////////////////////////////////
 
+	/////// INICIO ITEMS GUARDAR Y GUARDAR COMO ///////////////////////
+
 	/**
-	 * Almacena la matriz en un archivo
+	 * Guarda cambios de un archivo
 	 * 
 	 */
 	public void guardar() {
+		if (this.path == null) {
+			guardarComo();
 
+		}
 	}
 
 	/**
-	 * Almacena la matriz en un archivo...
+	 * Almacena la matriz en un archivo que no se a ha guardado previamente o que se
+	 * quiere cambiar el nombre o sobreescribir una ya creada
+	 * 
 	 */
 	public void guardarComo() {
+		try {
+			JFileChooser jFileChooser = new JFileChooser();
 
+			int jchoose = jFileChooser.showSaveDialog(this);
+
+			if (jchoose == 0) {
+				File file = jFileChooser.getSelectedFile();
+
+				this.path = file.getAbsolutePath();
+
+				if (!(path.endsWith(".txt"))) {
+					path += ".txt";
+
+				}
+
+				File checkFile = new File(path);
+
+				if (checkFile.exists()) {
+					overWrite();
+
+				} else {
+					guardar();
+
+				}
+
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			JOptionPane.showMessageDialog(null, "ERROR EN LECTURA");
+		}
 	}
 
+	/**
+	 * Método que pregunta al usuario si desea sobreescribir un archivo ya existente
+	 */
+	public void overWrite() {
+
+		if (0 == JOptionPane.showConfirmDialog(null, "¿QUIERES SOBRESCRIBIR EL ARCHIVO?")) {
+			guardar();
+		}
+	}
+
+    ///////FIN ITEMS GUARDAR Y GUARDAR COMO ///////////////////////
+	
+	
 	/**
 	 * Asigna la acción a relaizar segun el JFrame accionando.
 	 */

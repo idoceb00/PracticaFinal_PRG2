@@ -6,6 +6,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -70,8 +72,12 @@ public class Window extends JFrame implements ActionListener {
 		JMenu editJMenu = new JMenu("Editar");// Menu herramientas
 
 		this.abrirJMenuItem = new JMenuItem("Abrir");
+
 		this.guardarJMenuItem = new JMenuItem("Guardar");
+		this.guardarJMenuItem.addActionListener(this);
 		this.guardarComoJMenuItem = new JMenuItem("Guardar Como");
+		this.guardarComoJMenuItem.addActionListener(this);
+
 		this.jugarJMenuItem = new JMenuItem("Jugar");
 		this.deshacerJMenuItem = new JMenuItem("Deshacer");
 		this.rehacerJMenuItem = new JMenuItem("Rehacer");
@@ -108,14 +114,14 @@ public class Window extends JFrame implements ActionListener {
 	 * @param n número de filas
 	 * @param m número de columnas
 	 */
-	public void compruebaMatriz(int n, int m) {
+	public void checkMatriz(int n, int m) {
 		if (n < 1 || n > 9 || m < 1 || m > 9) {
 			JOptionPane.showMessageDialog(null, "ERROR. ENTRADA INCORRECTA");
 		} else {
 
 			this.matriz = new String[n][m];
 
-			muestraMatriz(this.matriz);
+			showMatriz(this.matriz);
 		}
 	}
 
@@ -125,7 +131,7 @@ public class Window extends JFrame implements ActionListener {
 	 * @param matriz Matriz inicializada con el tamaño que el usuario paso por
 	 *               parámetros.
 	 */
-	public void muestraMatriz(String[][] matriz) {
+	public void showMatriz(String[][] matriz) {
 
 		this.jPanel.removeAll();// Vacía el panel para poder añadir la matriz
 		this.jPanel.setLayout(new GridLayout(matriz.length, matriz[0].length));// Ajusta la el panel en base a las
@@ -136,7 +142,7 @@ public class Window extends JFrame implements ActionListener {
 				JTextField txt = new JTextField("");
 				txt.setHorizontalAlignment(JTextField.CENTER);// Coloca los espacios en blanco a rellenar en en el
 																// centro de la posición de la matriz
-				this.compruebaCelda(txt, i, j);
+				this.checkCell(txt, i, j);
 				this.jPanel.add(txt);
 			}
 		}
@@ -151,7 +157,7 @@ public class Window extends JFrame implements ActionListener {
 	 * @param filas    fila de la celda
 	 * @param columnas columna de la celda
 	 */
-	public void compruebaCelda(JTextField text, int filas, int columnas) {
+	public void checkCell(JTextField text, int filas, int columnas) {
 		text.addFocusListener(new FocusAdapter() {
 			public void focusLost(FocusEvent event) {
 
@@ -191,6 +197,35 @@ public class Window extends JFrame implements ActionListener {
 			guardarComo();
 
 		}
+
+		try {
+			FileWriter fWriter = new FileWriter(this.path);
+
+			PrintWriter pWriter = new PrintWriter(fWriter);
+
+			for (int i = 0; i < matriz.length; i++) {
+				for (int j = 0; j < matriz[0].length; j++) {
+					if (this.matriz[i][j] == null) {
+						pWriter.print("0");
+						
+					} else {
+						pWriter.print(matriz[i][j]);
+						
+					}
+					if (j != matriz[0].length - 1) {
+						pWriter.print(" ");
+					}
+				}
+				pWriter.println();
+
+			}
+
+			fWriter.close();
+		} catch (Exception e) {
+			// TODO: handle exception
+			JOptionPane.showMessageDialog(null, "ERROR DE ESCRITURA");
+
+		}
 	}
 
 	/**
@@ -227,7 +262,7 @@ public class Window extends JFrame implements ActionListener {
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
-			JOptionPane.showMessageDialog(null, "ERROR EN LECTURA");
+			JOptionPane.showMessageDialog(null, "ERROR DE LECTURA");
 		}
 	}
 
@@ -241,9 +276,8 @@ public class Window extends JFrame implements ActionListener {
 		}
 	}
 
-    ///////FIN ITEMS GUARDAR Y GUARDAR COMO ///////////////////////
-	
-	
+	/////// FIN ITEMS GUARDAR Y GUARDAR COMO ///////////////////////
+
 	/**
 	 * Asigna la acción a relaizar segun el JFrame accionando.
 	 */
@@ -255,13 +289,18 @@ public class Window extends JFrame implements ActionListener {
 				int n = Integer.parseInt(JOptionPane.showInputDialog(null, "Introduzca el número de filas(n): "));
 				int m = Integer.parseInt(JOptionPane.showInputDialog(null, "Introduzca el número de columnas(m): "));
 
-				compruebaMatriz(n, m);
+				checkMatriz(n, m);
 
 			} catch (Exception e) {
 				// TODO: handle exception
 				JOptionPane.showMessageDialog(null, "ERROR. ENTRADA INCORRECTA");
 			}
 
+		} else if (arg0.getSource() == this.guardarJMenuItem) {
+			this.guardar();
+
+		}else if(arg0.getSource() == this.guardarComoJMenuItem) {
+			this.guardarComo();
 		}
 
 	}

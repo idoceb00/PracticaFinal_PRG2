@@ -440,24 +440,34 @@ public class Window extends JFrame implements ActionListener {
 
 	////// FIN DE ITEM ABRIR/////////////////////
 
+	////// INICIO DE LOS ITEMS HACER Y DESHACER/////////////
+	/**
+	 * Método que realiza la función del item "deshacer" el cual que vuelve atrás
+	 * después de un cambio hecho en la matriz
+	 */
 	public void deshacer() {
 		this.matriz = matrices.deshacer();
 
 		showMatriz(this.matriz);
 	}
 
+	/**
+	 * Método que realiza la función del item "rehacer", que recupera un cambio
+	 * deshecho previamente
+	 */
 	public void rehacer() {
 		String[][] rehacer = matrices.rehacer();
-		
+
 		if (rehacer != null) {
 			this.matriz = rehacer;
 			showMatriz(this.matriz);
-			
-		}else {
+
+		} else {
 			JOptionPane.showMessageDialog(null, "NO SE PUEDE REHACER");
-		
+
 		}
 	}
+	////// FIN DE LOS ITEMS HACER Y DESHACER/////////////
 
 	/**
 	 * Asigna la acción a relaizar segun el JFrame accionando.
@@ -465,7 +475,8 @@ public class Window extends JFrame implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
 		// TODO Auto-generated method stub
-		if (arg0.getSource() == this.crearJMenuItem) {
+
+		if (arg0.getSource() == this.crearJMenuItem) { // ITEM CREAR
 			try {
 				int n = Integer.parseInt(JOptionPane.showInputDialog(null, "Introduzca el número de filas(n): "));
 				int m = Integer.parseInt(JOptionPane.showInputDialog(null, "Introduzca el número de columnas(m): "));
@@ -477,19 +488,21 @@ public class Window extends JFrame implements ActionListener {
 				JOptionPane.showMessageDialog(null, "ERROR. ENTRADA INCORRECTA");
 			}
 
-		} else if (arg0.getSource() == this.guardarJMenuItem) {
+		} else if (arg0.getSource() == this.guardarJMenuItem) { // ITEM GUARDAR
 			this.guardar();
 
-		} else if (arg0.getSource() == this.guardarComoJMenuItem) {
+		} else if (arg0.getSource() == this.guardarComoJMenuItem) { // ITEM GUARDARCOMO
 			this.guardarComo();
 
-		} else if (arg0.getSource() == this.abrirJMenuItem) {
+		} else if (arg0.getSource() == this.abrirJMenuItem) { // ITEM ABRIR
 			this.open();
 
-		} else if (arg0.getSource() == this.deshacerJMenuItem) {
+		} else if (arg0.getSource() == this.deshacerJMenuItem) { // ITEM DESHACER
 			this.deshacer();
-		} else if (arg0.getSource() == this.rehacerJMenuItem) {
+
+		} else if (arg0.getSource() == this.rehacerJMenuItem) { // ITEM REHACER
 			this.rehacer();
+
 		}
 	}
 

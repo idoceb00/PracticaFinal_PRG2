@@ -1,13 +1,15 @@
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
-import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -38,7 +40,7 @@ public class Window extends JFrame implements ActionListener {
 	private JMenuItem ayudaJMenuItem; // Item correspondiente a la acción de ayuda
 	private JMenuItem crearJMenuItem; // Item correspondiente a la acción de crear
 
-	private String path;
+	private String path; // Ruta de directorios en la que se almacena el fichero.
 
 	private String[][] matriz;
 
@@ -72,7 +74,9 @@ public class Window extends JFrame implements ActionListener {
 		JMenu editJMenu = new JMenu("Editar");// Menu herramientas
 
 		this.abrirJMenuItem = new JMenuItem("Abrir");
+		this.abrirJMenuItem.addActionListener(this);
 
+		// Dando función al item "guardar" y al "guardar como"
 		this.guardarJMenuItem = new JMenuItem("Guardar");
 		this.guardarJMenuItem.addActionListener(this);
 		this.guardarComoJMenuItem = new JMenuItem("Guardar Como");
@@ -114,8 +118,8 @@ public class Window extends JFrame implements ActionListener {
 	 * @param n número de filas
 	 * @param m número de columnas
 	 */
-	public void checkMatriz(int n, int m) {
-		if (n < 1 || n > 9 || m < 1 || m > 9) {
+	public void checkMatrizCrear(int n, int m) {
+		if (n < 1 || n > 10 || m < 1 || m > 10) {
 			JOptionPane.showMessageDialog(null, "ERROR. ENTRADA INCORRECTA");
 		} else {
 
@@ -141,7 +145,10 @@ public class Window extends JFrame implements ActionListener {
 			for (int j = 0; j < matriz[0].length; j++) {
 				JTextField txt = new JTextField("");
 				txt.setHorizontalAlignment(JTextField.CENTER);// Coloca los espacios en blanco a rellenar en en el
-																// centro de la posición de la matriz
+				// centro de la posición de la matriz
+				if (matriz[i][j] != null) {
+					txt.setText(matriz[i][j]);
+				}
 				this.checkCell(txt, i, j);
 				this.jPanel.add(txt);
 			}
@@ -199,28 +206,31 @@ public class Window extends JFrame implements ActionListener {
 		}
 
 		try {
-			FileWriter fWriter = new FileWriter(this.path);
+			FileWriter fWriter = new FileWriter(this.path);// Archivo en el que escribir
 
-			PrintWriter pWriter = new PrintWriter(fWriter);
+			PrintWriter pWriter = new PrintWriter(fWriter);// Como el boli que escribe en el papel
 
 			for (int i = 0; i < matriz.length; i++) {
 				for (int j = 0; j < matriz[0].length; j++) {
 					if (this.matriz[i][j] == null) {
 						pWriter.print("0");
-						
+
 					} else {
 						pWriter.print(matriz[i][j]);
-						
+
 					}
+
 					if (j != matriz[0].length - 1) {
 						pWriter.print(" ");
+
 					}
 				}
 				pWriter.println();
 
 			}
 
-			fWriter.close();
+			fWriter.close();// Es necesario cerrar el archivo, se abre al inicializarlo
+
 		} catch (Exception e) {
 			// TODO: handle exception
 			JOptionPane.showMessageDialog(null, "ERROR DE ESCRITURA");
@@ -229,13 +239,13 @@ public class Window extends JFrame implements ActionListener {
 	}
 
 	/**
-	 * Almacena la matriz en un archivo que no se a ha guardado previamente o que se
-	 * quiere cambiar el nombre o sobreescribir una ya creada
+	 * Guarda la ruta en la que se quiere guardar el fichero, y el nombre del
+	 * fichero junto con la terminación de este.
 	 * 
 	 */
 	public void guardarComo() {
 		try {
-			JFileChooser jFileChooser = new JFileChooser();
+			JFileChooser jFileChooser = new JFileChooser();// ¿PREGUNTAR COMO FUNCIONABA ESTO?
 
 			int jchoose = jFileChooser.showSaveDialog(this);
 
@@ -244,11 +254,13 @@ public class Window extends JFrame implements ActionListener {
 
 				this.path = file.getAbsolutePath();
 
+				// Si el arcchivo no termina en ".txt" lo añade
 				if (!(path.endsWith(".txt"))) {
 					path += ".txt";
 
 				}
 
+				// Renueva el fichero por si iba sin ".txt"
 				File checkFile = new File(path);
 
 				if (checkFile.exists()) {
@@ -268,6 +280,7 @@ public class Window extends JFrame implements ActionListener {
 
 	/**
 	 * Método que pregunta al usuario si desea sobreescribir un archivo ya existente
+	 * 
 	 */
 	public void overWrite() {
 
@@ -277,6 +290,99 @@ public class Window extends JFrame implements ActionListener {
 	}
 
 	/////// FIN ITEMS GUARDAR Y GUARDAR COMO ///////////////////////
+
+	public void open() {
+		try {
+			JFileChooser fileChooser = new JFileChooser();
+
+			int num = fileChooser.showOpenDialog(this);
+
+			if (num == 0) {
+				File file = fileChooser.getSelectedFile();
+
+				FileReader fileReader = new FileReader(file);
+
+				BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+				ArrayList<String> lineas = new ArrayList<String>();
+
+				String linea = bufferedReader.readLine();
+
+				for (int i = 0; linea != null; i++) {
+					lineas.add(linea);
+					linea = bufferedReader.readLine();
+
+				}
+
+				int filas = lineas.size();
+
+				String[] calculaColumnas = lineas.get(0).split(" ");
+
+				int columnas = calculaColumnas.length;
+				// Falta comprobar que todas lineas tengan las mismas columnas
+
+
+				checkMatrizAbrir(filas, columnas, lineas);
+				showMatriz(this.matriz);
+
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			JOptionPane.showMessageDialog(null, "ERROR EN EL ARCHIVO");
+		}
+	}
+
+	public void checkMatrizAbrir(int n, int m, ArrayList<String> lineas) {
+		if (n < 1 || n > 10 || m < 1 || m > 10) {
+			JOptionPane.showMessageDialog(null, "ERROR EN EL ARCHIVO. MATRIZ INCORRECTA");
+
+		} else {
+
+			String matriz[][] = new String[n][m];
+
+			for (int i = 0; i < n; i++) {
+				String[] cells = lineas.get(i).split(" ");
+
+				for (int j = 0; j < m; j++) {
+					if (cells.length == m) {
+						if (checkNumberAbrir(cells[j])) {
+							matriz[i][j] = cells[j];
+
+						} else if (!cells[j].equals("0")) {
+
+							// En caso de que no sea valido no lo añadimos a la matriz y paramos
+							JOptionPane.showMessageDialog(null, "ERROR EN EL ARCHIVO. MATRIZ INCORRECTA");
+							return;
+						}
+					} else {
+						JOptionPane.showMessageDialog(null, "ERROR EN EL ARCHIVO. MATRIZ INCORRECTA");
+						return;
+					}
+				}
+			}
+			this.matriz = matriz;
+		}
+
+	}
+
+	public boolean checkNumberAbrir(String cell) {
+		try {
+			int num = Integer.parseInt(cell);
+
+			if (num < 1 || num > 9) {
+				return false;
+				
+			}
+
+			return true;
+		} catch (Exception e) {
+			// TODO: handle exception
+			if (!cell.equals("0")) {
+				JOptionPane.showMessageDialog(null, "ERROR EN EL ARCHIVO. NO SE PUEDE INTRODUCIR TEXTO");
+			}
+			return false;
+		}
+	}
 
 	/**
 	 * Asigna la acción a relaizar segun el JFrame accionando.
@@ -289,7 +395,7 @@ public class Window extends JFrame implements ActionListener {
 				int n = Integer.parseInt(JOptionPane.showInputDialog(null, "Introduzca el número de filas(n): "));
 				int m = Integer.parseInt(JOptionPane.showInputDialog(null, "Introduzca el número de columnas(m): "));
 
-				checkMatriz(n, m);
+				checkMatrizCrear(n, m);
 
 			} catch (Exception e) {
 				// TODO: handle exception
@@ -299,10 +405,13 @@ public class Window extends JFrame implements ActionListener {
 		} else if (arg0.getSource() == this.guardarJMenuItem) {
 			this.guardar();
 
-		}else if(arg0.getSource() == this.guardarComoJMenuItem) {
+		} else if (arg0.getSource() == this.guardarComoJMenuItem) {
 			this.guardarComo();
-		}
 
+		} else if (arg0.getSource() == this.abrirJMenuItem) {
+			this.open();
+
+		}
 	}
 
 }

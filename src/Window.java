@@ -19,6 +19,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.text.DefaultEditorKit.CopyAction;
 
 /**
  * Clase que implementa los objetos de tipo Window
@@ -44,6 +45,10 @@ public class Window extends JFrame implements ActionListener {
 
 	private String[][] matriz;
 
+	private String estado;
+
+	private Matrices matrices;
+
 	/**
 	 * Constructor de los objetos de tipo Window
 	 */
@@ -58,6 +63,8 @@ public class Window extends JFrame implements ActionListener {
 		this.jPanel = new JPanel();
 
 		this.add(this.jPanel, BorderLayout.CENTER);
+
+		this.matrices = new Matrices();
 
 		menuBarMethod();
 		this.setVisible(true);
@@ -83,8 +90,12 @@ public class Window extends JFrame implements ActionListener {
 		this.guardarComoJMenuItem.addActionListener(this);
 
 		this.jugarJMenuItem = new JMenuItem("Jugar");
+
 		this.deshacerJMenuItem = new JMenuItem("Deshacer");
+		this.deshacerJMenuItem.addActionListener(this);
 		this.rehacerJMenuItem = new JMenuItem("Rehacer");
+		this.rehacerJMenuItem.addActionListener(this);
+
 		this.ayudaJMenuItem = new JMenuItem("Ayuda");
 
 		// Dando función a la item "crear"
@@ -145,7 +156,7 @@ public class Window extends JFrame implements ActionListener {
 			for (int j = 0; j < matriz[0].length; j++) {
 				JTextField txt = new JTextField("");
 				txt.setHorizontalAlignment(JTextField.CENTER);// Coloca los espacios en blanco a rellenar en en el
-				// centro de la posición de la matriz
+																// centro de la posición de la matriz
 				if (matriz[i][j] != null) {
 					txt.setText(matriz[i][j]);
 				}
@@ -166,6 +177,7 @@ public class Window extends JFrame implements ActionListener {
 	 */
 	public void checkCell(JTextField text, int filas, int columnas) {
 		text.addFocusListener(new FocusAdapter() {
+
 			public void focusLost(FocusEvent event) {
 
 				try {
@@ -179,6 +191,7 @@ public class Window extends JFrame implements ActionListener {
 
 						matriz[filas][columnas] = text.getText();
 					}
+
 				} catch (Exception e) {
 					// TODO: handle exception
 					if (!(text.getText().equals(""))) {
@@ -186,6 +199,30 @@ public class Window extends JFrame implements ActionListener {
 						text.setText("");
 					}
 				}
+				if (!estado.equals(text.getText())) {
+					copy();
+
+				}
+			}
+
+			public void focusGained(FocusEvent event) {
+				estado = text.getText();
+			}
+
+			private void copy() {
+				String[][] copy = new String[matriz.length][matriz[0].length];
+
+				for (int i = 0; i < copy.length; i++) {
+					for (int j = 0; j < copy[0].length; j++) {
+						if (i == filas && j == columnas) {
+							copy[i][j] = estado;
+						} else {
+							copy[i][j] = matriz[i][j];
+						}
+					}
+				}
+
+				matrices.sumar(copy);
 			}
 		});
 	}
@@ -291,6 +328,10 @@ public class Window extends JFrame implements ActionListener {
 
 	/////// FIN ITEMS GUARDAR Y GUARDAR COMO ///////////////////////
 
+	////// INICIO DE ITEM ABRIR/////////////////////
+	/**
+	 * Método que relaliza la funcionalidad del item "abrir"
+	 */
 	public void open() {
 		try {
 			JFileChooser fileChooser = new JFileChooser();
@@ -321,7 +362,6 @@ public class Window extends JFrame implements ActionListener {
 				int columnas = calculaColumnas.length;
 				// Falta comprobar que todas lineas tengan las mismas columnas
 
-
 				checkMatrizAbrir(filas, columnas, lineas);
 				showMatriz(this.matriz);
 
@@ -332,6 +372,13 @@ public class Window extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Rellena la matriz del programa copiando el archivo leído
+	 * 
+	 * @param n      filas de la matriz
+	 * @param m      columnas de la matriz
+	 * @param lineas filas de la matriz léida en el archivo
+	 */
 	public void checkMatrizAbrir(int n, int m, ArrayList<String> lineas) {
 		if (n < 1 || n > 10 || m < 1 || m > 10) {
 			JOptionPane.showMessageDialog(null, "ERROR EN EL ARCHIVO. MATRIZ INCORRECTA");
@@ -365,13 +412,20 @@ public class Window extends JFrame implements ActionListener {
 
 	}
 
+	/**
+	 * Comprueba que el número de la celda de la matriz es válido, implementado para
+	 * el item abrir
+	 * 
+	 * @param cell celda que contiene el número
+	 * @return true si es válido, dalse si no lo es.
+	 */
 	public boolean checkNumberAbrir(String cell) {
 		try {
 			int num = Integer.parseInt(cell);
 
 			if (num < 1 || num > 9) {
 				return false;
-				
+
 			}
 
 			return true;
@@ -381,6 +435,27 @@ public class Window extends JFrame implements ActionListener {
 				JOptionPane.showMessageDialog(null, "ERROR EN EL ARCHIVO. NO SE PUEDE INTRODUCIR TEXTO");
 			}
 			return false;
+		}
+	}
+
+	////// FIN DE ITEM ABRIR/////////////////////
+
+	public void deshacer() {
+		this.matriz = matrices.deshacer();
+
+		showMatriz(this.matriz);
+	}
+
+	public void rehacer() {
+		String[][] rehacer = matrices.rehacer();
+		
+		if (rehacer != null) {
+			this.matriz = rehacer;
+			showMatriz(this.matriz);
+			
+		}else {
+			JOptionPane.showMessageDialog(null, "NO SE PUEDE REHACER");
+		
 		}
 	}
 
@@ -411,6 +486,10 @@ public class Window extends JFrame implements ActionListener {
 		} else if (arg0.getSource() == this.abrirJMenuItem) {
 			this.open();
 
+		} else if (arg0.getSource() == this.deshacerJMenuItem) {
+			this.deshacer();
+		} else if (arg0.getSource() == this.rehacerJMenuItem) {
+			this.rehacer();
 		}
 	}
 

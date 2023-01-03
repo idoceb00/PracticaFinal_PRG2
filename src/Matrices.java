@@ -127,6 +127,14 @@ public class Matrices {
 	 * @param matriz a anyadir al ArrayList
 	 */
 	public void sumar(String[][] matriz) {
+		if (this.count != this.matrices.size()) { // En caso de hacer un cambio despues de haber deshecho, elimina las
+													// matrices de las posiciones siguientes, imposibilitando la función
+													// de rehacer
+			for (int i = count + 1; i < this.matrices.size(); i++) {
+				this.matrices.remove(i);
+			}
+		}
+
 		this.matrices.add(matriz);
 		this.count++;
 

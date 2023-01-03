@@ -73,17 +73,19 @@ public class Window extends JFrame implements ActionListener {
 	/**
 	 * Método que crea la barra de herramientas con los menus e items
 	 * correspondientes
+	 * 
 	 */
 	public void menuBarMethod() {
 		JMenuBar menuBar = new JMenuBar();
 
 		JMenu fileJMenu = new JMenu("Archivo");// Menu archivo
-		JMenu editJMenu = new JMenu("Editar");// Menu herramientas
+		JMenu editJMenu = new JMenu("Editar");// Menu editar
 
+		// Inicializa el item "abrir" y le da una acción
 		this.abrirJMenuItem = new JMenuItem("Abrir");
 		this.abrirJMenuItem.addActionListener(this);
 
-		// Dando función al item "guardar" y al "guardar como"
+		// Da función al item "guardar" y al "guardar como" y los inicializa
 		this.guardarJMenuItem = new JMenuItem("Guardar");
 		this.guardarJMenuItem.addActionListener(this);
 		this.guardarComoJMenuItem = new JMenuItem("Guardar Como");
@@ -91,6 +93,8 @@ public class Window extends JFrame implements ActionListener {
 
 		this.jugarJMenuItem = new JMenuItem("Jugar");
 
+		// Inicializa los items "rehacer" y "deshacer" del menu editar y les da una
+		// acción
 		this.deshacerJMenuItem = new JMenuItem("Deshacer");
 		this.deshacerJMenuItem.addActionListener(this);
 		this.rehacerJMenuItem = new JMenuItem("Rehacer");
@@ -98,7 +102,7 @@ public class Window extends JFrame implements ActionListener {
 
 		this.ayudaJMenuItem = new JMenuItem("Ayuda");
 
-		// Dando función a la item "crear"
+		// Da función a la item "crear" y lo inicializa
 		this.crearJMenuItem = new JMenuItem("Crear");
 		this.crearJMenuItem.addActionListener(this);
 
@@ -155,7 +159,7 @@ public class Window extends JFrame implements ActionListener {
 		for (int i = 0; i < matriz.length; i++) {
 			for (int j = 0; j < matriz[0].length; j++) {
 				JTextField txt = new JTextField("");
-				txt.setHorizontalAlignment(JTextField.CENTER);// Coloca los espacios en blanco a rellenar en en el
+				txt.setHorizontalAlignment(JTextField.CENTER);// Coloca los espacios en blanco a rellenar en el
 																// centro de la posición de la matriz
 				if (matriz[i][j] != null) {
 					txt.setText(matriz[i][j]);
@@ -176,8 +180,11 @@ public class Window extends JFrame implements ActionListener {
 	 * @param columnas columna de la celda
 	 */
 	public void checkCell(JTextField text, int filas, int columnas) {
-		text.addFocusListener(new FocusAdapter() {
+		text.addFocusListener(new FocusAdapter() { // Subclase focus adapter
 
+			/**
+			 * Guarda el valor de la celda cuando el foco se va de esta en la matriz globla
+			 */
 			public void focusLost(FocusEvent event) {
 
 				try {
@@ -193,22 +200,33 @@ public class Window extends JFrame implements ActionListener {
 					}
 
 				} catch (Exception e) {
-					// TODO: handle exception
+					// TODO: handle exception en caso de que el contenido de la celda sea distinto
+					// de un número o un espacio vacío
 					if (!(text.getText().equals(""))) {
 						JOptionPane.showMessageDialog(null, "ERROR. NO SE PUEDE INTRODUCIR TEXTO");
 						text.setText("");
 					}
 				}
+
+				// EN caso de que la matriz halla cambiado llama al método copy que hace una
+				// copia de esta y la almacena
 				if (!estado.equals(text.getText())) {
 					copy();
 
 				}
 			}
 
+			/**
+			 * Guarda el contenido de la celda en la variable global estado cuando el foco
+			 * entra en la celda
+			 */
 			public void focusGained(FocusEvent event) {
 				estado = text.getText();
 			}
 
+			/**
+			 * Crea una copia de la matriz que queda almacenada en el atribitu matrices
+			 */
 			private void copy() {
 				String[][] copy = new String[matriz.length][matriz[0].length];
 
@@ -250,14 +268,15 @@ public class Window extends JFrame implements ActionListener {
 			for (int i = 0; i < matriz.length; i++) {
 				for (int j = 0; j < matriz[0].length; j++) {
 					if (this.matriz[i][j] == null) {
-						pWriter.print("0");
+						pWriter.print("0"); // Los espacios vacíos guarda un string "0" en lugar de un null
 
 					} else {
 						pWriter.print(matriz[i][j]);
 
 					}
 
-					if (j != matriz[0].length - 1) {
+					if (j != matriz[0].length - 1) { // EN caso de que no se encuentre en la última celda añade un
+														// espacio
 						pWriter.print(" ");
 
 					}
@@ -282,9 +301,11 @@ public class Window extends JFrame implements ActionListener {
 	 */
 	public void guardarComo() {
 		try {
-			JFileChooser jFileChooser = new JFileChooser();// ¿PREGUNTAR COMO FUNCIONABA ESTO?
+			JFileChooser jFileChooser = new JFileChooser();// Frame que permite seleccionar al usuario un fichero del
+															// sistema
 
-			int jchoose = jFileChooser.showSaveDialog(this);
+			int jchoose = jFileChooser.showSaveDialog(this);// almacena el valor de la seleccion del usuario al frame, 0
+															// si clicka en aceptar
 
 			if (jchoose == 0) {
 				File file = jFileChooser.getSelectedFile();
@@ -300,7 +321,8 @@ public class Window extends JFrame implements ActionListener {
 				// Renueva el fichero por si iba sin ".txt"
 				File checkFile = new File(path);
 
-				if (checkFile.exists()) {
+				if (checkFile.exists()) { // Encaso de que el fichero con esa ruta ya exista, mediante el método exists
+											// de la clase File
 					overWrite();
 
 				} else {
@@ -329,21 +351,26 @@ public class Window extends JFrame implements ActionListener {
 	/////// FIN ITEMS GUARDAR Y GUARDAR COMO ///////////////////////
 
 	////// INICIO DE ITEM ABRIR/////////////////////
+
 	/**
 	 * Método que relaliza la funcionalidad del item "abrir"
 	 */
 	public void open() {
 		try {
-			JFileChooser fileChooser = new JFileChooser();
+			JFileChooser fileChooser = new JFileChooser(); // Frame que permite al usuario seleccionar un fichero del
+															// sistema
 
-			int num = fileChooser.showOpenDialog(this);
+			int num = fileChooser.showOpenDialog(this); // Almacena la respuesta del usuario
 
 			if (num == 0) {
-				File file = fileChooser.getSelectedFile();
+				File file = fileChooser.getSelectedFile(); // Almacena el fichero seleccionado en la ruta del objeto
+															// JFileChooser
 
-				FileReader fileReader = new FileReader(file);
+				FileReader fileReader = new FileReader(file); // Crea un objeto FileReader, que es un objeto copia del
+																// fichero con permisos de lectura para el ficheros
+																// seleccionado por el usuario
 
-				BufferedReader bufferedReader = new BufferedReader(fileReader);
+				BufferedReader bufferedReader = new BufferedReader(fileReader);// Lector del fichero de tipo FileReader
 
 				ArrayList<String> lineas = new ArrayList<String>();
 
@@ -446,7 +473,7 @@ public class Window extends JFrame implements ActionListener {
 	 * después de un cambio hecho en la matriz
 	 */
 	public void deshacer() {
-		this.matriz = matrices.deshacer();
+		this.matriz = matrices.deshacer(this.matriz);
 
 		showMatriz(this.matriz);
 	}

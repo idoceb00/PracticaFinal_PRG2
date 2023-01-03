@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Objects;
 
 import javax.swing.JOptionPane;
 
@@ -27,12 +28,65 @@ public class Matrices {
 	 * 
 	 * @return matriz anterior al cambio
 	 */
-	public String[][] deshacer() {
+	public String[][] deshacer(String[][] matriz) {
+		if (this.count == this.matrices.size()) {
+			if (!(compruebaActual(matriz))) {
+				insertLastMatriz(matriz);
+				restar();
+			}
+		}
+
 		restar();
 
 		String[][] deshacer = matrices.get(count);
 
 		return deshacer;
+	}
+
+	/**
+	 * Comprueaba que la matriz que recibe como parámetro que equivale a la que está
+	 * viendo el usuario por pantalla, sea igual a la que esta almacenada en la
+	 * última posición del agregado
+	 * 
+	 * @param matriz que está viendo actualmente el usuario por pantalla
+	 * @return true si coinciden las matrices, false si no coinciden
+	 */
+	public Boolean compruebaActual(String[][] matriz) {
+		boolean compruebaActual = true;
+		String[][] matrizMatrices = this.matrices.get(this.count - 1);
+
+		for (int i = 0; i < matriz.length; i++) {
+			for (int j = 0; j < matriz[0].length; j++) {
+				if (!Objects.equals(matriz[i][j], matrizMatrices[i][j])) {
+					compruebaActual = false;
+					break;
+				}
+			}
+		}
+
+		return compruebaActual;
+	}
+
+	/**
+	 * Añade la matriz que está viendo el usuario por pantallas a la última posición
+	 * del agregado.
+	 * 
+	 * @param matriz que está viendo el usuario por pantalla
+	 */
+	public void insertLastMatriz(String[][] matriz) {
+		int filas = matriz.length;
+		int columnas = matriz[0].length;
+
+		String[][] lastMatriz = new String[filas][columnas];
+
+		for (int i = 0; i < filas; i++) {
+			for (int j = 0; j < columnas; j++) {
+				lastMatriz[i][j] = matriz[i][j];
+			}
+		}
+
+		this.matrices.add(lastMatriz);
+		count++;
 	}
 
 	/**
@@ -62,10 +116,6 @@ public class Matrices {
 		if (this.count < max) {
 			this.count++;
 			return true;
-
-		} else if (this.count == max) {
-			return true;
-
 		} else {
 			return false;
 		}

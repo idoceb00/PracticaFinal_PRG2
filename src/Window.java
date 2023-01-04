@@ -1,4 +1,5 @@
 import java.awt.BorderLayout;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,6 +12,7 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -19,7 +21,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.text.DefaultEditorKit.CopyAction;
+import javax.swing.SwingWorker;
+import javax.swing.text.TableView.TableRow;
 
 /**
  * Clase que implementa los objetos de tipo Window
@@ -49,6 +52,14 @@ public class Window extends JFrame implements ActionListener {
 
 	private Matrices matrices;
 
+	private boolean edit;
+
+	private ArrayList<String[][]> almacenJuego;
+
+	private JuegoCellTablero cellTabOrigin;
+
+	private JuegoCellTablero cellTabDest;
+
 	/**
 	 * Constructor de los objetos de tipo Window
 	 */
@@ -66,7 +77,16 @@ public class Window extends JFrame implements ActionListener {
 
 		this.matrices = new Matrices();
 
+		this.edit = true;
+
+		this.almacenJuego = new ArrayList<String[][]>();
+
+		this.cellTabDest = null;
+
+		this.cellTabOrigin = null;
+
 		menuBarMethod();
+
 		this.setVisible(true);
 	}
 
@@ -91,7 +111,9 @@ public class Window extends JFrame implements ActionListener {
 		this.guardarComoJMenuItem = new JMenuItem("Guardar Como");
 		this.guardarComoJMenuItem.addActionListener(this);
 
+		// Inicializa el item Jugar y le de acción
 		this.jugarJMenuItem = new JMenuItem("Jugar");
+		this.jugarJMenuItem.addActionListener(this);
 
 		// Inicializa los items "rehacer" y "deshacer" del menu editar y les da una
 		// acción
@@ -101,6 +123,7 @@ public class Window extends JFrame implements ActionListener {
 		this.rehacerJMenuItem.addActionListener(this);
 
 		this.ayudaJMenuItem = new JMenuItem("Ayuda");
+		this.ayudaJMenuItem.addActionListener(this);
 
 		// Da función a la item "crear" y lo inicializa
 		this.crearJMenuItem = new JMenuItem("Crear");
@@ -156,8 +179,8 @@ public class Window extends JFrame implements ActionListener {
 		this.jPanel.setLayout(new GridLayout(matriz.length, matriz[0].length));// Ajusta la el panel en base a las
 																				// dimensiones de la matriz
 
-		for (int i = 0; i < matriz.length; i++) {
-			for (int j = 0; j < matriz[0].length; j++) {
+		for (int i = 0; i < this.matriz.length; i++) {
+			for (int j = 0; j < this.matriz[0].length; j++) {
 				JTextField txt = new JTextField("");
 				txt.setHorizontalAlignment(JTextField.CENTER);// Coloca los espacios en blanco a rellenar en el
 																// centro de la posición de la matriz
@@ -225,7 +248,7 @@ public class Window extends JFrame implements ActionListener {
 			}
 
 			/**
-			 * Crea una copia de la matriz que queda almacenada en el atribitu matrices
+			 * Crea una copia de la matriz que queda almacenada en el atributo matrices
 			 */
 			private void copy() {
 				String[][] copy = new String[matriz.length][matriz[0].length];
@@ -473,9 +496,13 @@ public class Window extends JFrame implements ActionListener {
 	 * después de un cambio hecho en la matriz
 	 */
 	public void deshacer() {
-		this.matriz = matrices.deshacer(this.matriz);
-
-		showMatriz(this.matriz);
+		if (!edit) {
+			this.matriz = matrices.deshacer(this.matriz);
+			loadPanelJuego();
+		} else {
+			this.matriz = matrices.deshacer(this.matriz);
+			showMatriz(this.matriz);
+		}
 	}
 
 	/**
@@ -487,14 +514,118 @@ public class Window extends JFrame implements ActionListener {
 
 		if (rehacer != null) {
 			this.matriz = rehacer;
-			showMatriz(this.matriz);
-
+			if (!edit) {
+				loadPanelJuego();
+			} else {
+				showMatriz(this.matriz);
+			}
 		} else {
 			JOptionPane.showMessageDialog(null, "NO SE PUEDE REHACER");
 
 		}
 	}
 	////// FIN DE LOS ITEMS HACER Y DESHACER/////////////
+
+	///// INICIO ITEM JUGAR /////////////
+
+	public void jugar() {
+
+		edit = false;
+		this.matrices = new Matrices();
+		String[][] copy = copyJugar();
+		int filasTablero = copy.length * 2 - 1;
+		int colTablero = copy[0].length * 2 - 1;
+		this.matriz = new String[filasTablero][colTablero]; // Reinicializo la matriz global con las dimensiones del
+															// tablero de juego
+
+		for (int i = 0; i < filasTablero; i++) {
+			for (int j = 0; j < colTablero; j++) {
+				if (i % 2 == 0 && j % 2 == 0) {
+					this.matriz[i][j] = copy[i / 2][j / 2];
+				}
+			}
+		}
+
+		loadPanelJuego();
+
+	}
+
+	/**
+	 * Carga el panel en de juego en la ventana, con las herramientas de juego
+	 * también
+	 */
+	public void loadPanelJuego() {
+		this.jPanel.removeAll();// Vacía el panel para poder añadir la matriz
+		this.jPanel.setLayout(new GridLayout(matriz.length, matriz[0].length));// Ajusta la el panel en base a las
+																				// dimensiones de la matriz
+		for (int i = 0; i < this.matriz.length; i++) {
+			for (int j = 0; j < this.matriz[0].length; j++) {
+				if (i % 2 == 0 && j % 2 == 0) { // Si me encuentro en una de las celdas que contiene números, añado un
+												// objeto de tipo JuegoCellTablero
+					JuegoCellTablero button = new JuegoCellTablero(i, j);
+
+					this.jPanel.add(button);
+				} else {
+					JTextField txt = new JTextField();
+					txt.setEditable(false); // Impide al usuario editar las celdas impares
+					txt.setHorizontalAlignment(JTextField.CENTER);
+					if (this.matriz[i][j] != null) {
+						txt.setFont(new Font("Arial", Font.BOLD, 14));
+						txt.setText(this.matriz[i][j]);
+
+					}
+
+					this.jPanel.add(txt);
+				}
+			}
+		}
+
+		this.setVisible(true);
+
+	}
+
+	/**
+	 * Comprueba que la matriz con la que el usuario va a jugar este completa
+	 * 
+	 * @return true si esta completa la matriz, false si faltan casillas por
+	 *         completar
+	 */
+	public Boolean checkJugar() {
+		boolean check = true;
+
+		for (int i = 0; i < this.matriz.length; i++) {
+			for (int j = 0; j < this.matriz[0].length; j++) {
+				if (this.matriz[i][j] == null) {
+					check = false;
+				}
+			}
+		}
+
+		return check;
+	}
+
+	/**
+	 * Crea una copia de la matriz para el método jugar
+	 * 
+	 * @return copia de la matriz
+	 */
+	private String[][] copyJugar() {
+		String[][] copy = new String[this.matriz.length][this.matriz[0].length];
+		int filas = this.matriz.length;
+		int columnas = this.matriz[0].length;
+
+		for (int i = 0; i < copy.length; i++) {
+			for (int j = 0; j < copy[0].length; j++) {
+				if (i == filas && j == columnas) {
+					copy[i][j] = estado;
+				} else {
+					copy[i][j] = matriz[i][j];
+				}
+			}
+		}
+
+		return copy;
+	}
 
 	/**
 	 * Asigna la acción a relaizar segun el JFrame accionando.
@@ -530,6 +661,147 @@ public class Window extends JFrame implements ActionListener {
 		} else if (arg0.getSource() == this.rehacerJMenuItem) { // ITEM REHACER
 			this.rehacer();
 
+		} else if (arg0.getSource() == this.jugarJMenuItem) {
+			this.jugar();
+
+		} else if (arg0.getSource() == this.ayudaJMenuItem) {
+			if (edit) {
+				JOptionPane.showMessageDialog(null, "SOLO DISPONIBLE EN JUEGO");
+			} else {
+				this.ayuda();
+			}
+		}
+	}
+
+	private void ayuda() {
+		SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+
+			@Override
+			protected String doInBackground() throws Exception {
+				// TODO Auto-generated method stub
+				int[][] m = new int[matriz.length / 2 + 1][matriz.length / 2 + 1];
+				for (int i = 0; i < m.length; i++) {
+					for (int j = 0; j < m[0].length; j++) {
+						m[i][j] = Integer.parseInt(matriz[i * 2][j * 2]);
+					}
+				}
+				Solucion solucion = new Solucion(m, m.length, m[0].length);
+
+				solucion.searchSolution(solucion.matrizSolution(), 0, 0);
+				String[][] firstSol = solucion.getSolution(0);
+				if (firstSol == null) {
+					JOptionPane.showMessageDialog(null, "No hay solución");
+				} else {
+					matriz = firstSol;
+					loadPanelJuego();
+				}
+				return null;
+			}
+
+		};
+		worker.execute();
+
+	}
+
+	/**
+	 * 
+	 * @author ignacio
+	 *
+	 */
+	public class JuegoCellTablero extends JButton implements ActionListener {
+
+		private int i;
+		private int j;
+
+		public JuegoCellTablero(int fila, int columna) {
+			this.i = fila;
+			this.j = columna;
+			this.addActionListener(this);
+			this.setText(matriz[i][j]);
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			// TODO Auto-generated method stub
+			if (cellTabOrigin == null) {
+				cellTabOrigin = this;
+			} else {
+				cellTabDest = this;
+
+				for (Movimientos movimiento : Movimientos.values()) {
+					if ((cellTabOrigin.i + movimiento.getFila() * 2 == cellTabDest.i)
+							&& (cellTabOrigin.j + movimiento.getCol() * 2 == cellTabDest.j)) {
+
+						if (matriz[cellTabOrigin.i + movimiento.getFila()][cellTabOrigin.j
+								+ movimiento.getCol()] == null) {
+
+							if (Integer.parseInt(matriz[cellTabOrigin.i][cellTabOrigin.j]) + 1 == Integer
+									.parseInt(matriz[cellTabDest.i][cellTabDest.j])) {
+								String[][] copia = copyJugar();
+								matrices.sumar(copia);
+								matriz[cellTabOrigin.i + movimiento.getFila()][cellTabOrigin.j
+										+ movimiento.getCol()] = movimiento.getSimbolo();
+								cellTabDest = null;
+								cellTabOrigin = null;
+								loadPanelJuego();
+								return;
+							} else if ((Integer.parseInt(matriz[cellTabOrigin.i][cellTabOrigin.j]) == maxNum())
+									&& (Integer.parseInt(matriz[cellTabDest.i][cellTabDest.j]) == minNum())) {
+								String[][] copia = copyJugar();
+								matrices.sumar(copia);
+								matriz[cellTabOrigin.i + movimiento.getFila()][cellTabOrigin.j
+										+ movimiento.getCol()] = movimiento.getSimbolo();
+								cellTabDest = null;
+								cellTabOrigin = null;
+								loadPanelJuego();
+								return;
+							}
+						}
+					}
+				}
+				JOptionPane.showMessageDialog(null, "NO SE PUEDE MOVER");
+				cellTabDest = null;
+				cellTabOrigin = null;
+			}
+		}
+
+		/**
+		 * Devuelve el número mayor de la matriz
+		 * 
+		 * @return max entero que representa al número mayor de la matriz
+		 */
+		public int maxNum() {
+			int max = Integer.parseInt(matriz[0][0]);
+
+			for (int i = 0; i < matriz.length; i += 2) {
+				for (int j = 0; j < matriz[0].length; j += 2) {
+					if (Integer.parseInt(matriz[i][j]) > max) {
+						max = Integer.parseInt(matriz[i][j]);
+					}
+				}
+			}
+
+			return max;
+		}
+
+		/**
+		 * Devuleve el número menor de la matriz;
+		 * 
+		 * @return min entero que representa el número menor de la matriz
+		 */
+		public int minNum() {
+			int min = Integer.parseInt(matriz[0][0]);
+
+			for (int i = 0; i < matriz.length; i += 2) {
+				for (int j = 0; j < matriz[0].length; j += 2) {
+					if (Integer.parseInt(matriz[i][j]) < min) {
+						min = Integer.parseInt(matriz[i][j]);
+
+					}
+				}
+			}
+
+			return min;
 		}
 	}
 
